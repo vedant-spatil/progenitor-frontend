@@ -1,0 +1,53 @@
+name: ci
+
+# Frontend repo CI: lint, typecheck, build.
+# The full-stack gate lives in the backend repo. On pushes to main this job
+# asks the backend repo to run it against this commit.
+#
+# Settings (repo -> Settings -> Secrets and variables -> Actions):
+#   vars.BACKEND_REPO              owner/name of the backend repo
+#                                  (default: <this owner>/progenitor-backend)
+#   secrets.BACKEND_DISPATCH_TOKEN token allowed to send repository_dispatch to the
+#                                  backend repo (fine-grained: Contents read/write).
+#                                  If unset, the trigger step is skipped.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+  trigger-stack-gate:
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Ask backend repo to run the full-stack gate
+        env:
+          GH_TOKEN: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+          BACKEND_REPO: ${{ vars.BACKEND_REPO || format('{0}/progenitor-backend', github.repository_owner) }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "BACKEND_DISPATCH_TOKEN not set; skipping stack gate trigger"
+            exit 0
+          fi
+          gh api "repos/$BACKEND_REPO/dispatches" \
+            -f event_type=frontend-updated \
+            -F "client_payload[ref]=$GITHUB_SHA"
