@@ -129,3 +129,41 @@ export const RunStatusEvent = z.object({
   steps_used: z.number().int().optional(),
   error: z.string().optional(),
 });
+
+// ---------------- Phase 7b additions ----------------
+
+export const Role = z.enum(["coordinator", "clinician", "admin"]);
+export type Role = z.infer<typeof Role>;
+
+/** GET /api/me */
+export const Me = z.object({ id: z.number().int(), username: z.string(), roles: z.array(Role) });
+export type Me = z.infer<typeof Me>;
+
+/** GET /api/patients: synthetic labels only. */
+export const Patient = z.object({ id: z.number().int(), label: z.string(), source: z.string() });
+export type Patient = z.infer<typeof Patient>;
+export const PatientList = z.object({ items: z.array(Patient) });
+
+/** GET /api/runs: newest first, at most 50. */
+export const RunListItem = z.object({
+  id: z.uuid(),
+  patient_id: z.number().int(),
+  patient_label: z.string(),
+  status: RunStatus,
+  created_at: z.string(),
+  finished_at: z.string().nullable(),
+});
+export type RunListItem = z.infer<typeof RunListItem>;
+export const RunList = z.object({ items: z.array(RunListItem) });
+
+/** PATCH /api/referrals/{id}: edit the text, or discard. Clinician only. */
+export const ReferralUpdateRequest = z
+  .object({ body: z.string().max(20000).optional(), discard: z.boolean().optional() })
+  .refine((r) => r.discard || (r.body ?? "").trim().length > 0, { message: "body is required", path: ["body"] });
+export type Referral = z.infer<typeof Referral>;
+export type Verdict = z.infer<typeof Verdict>;
+export type ReviewDecision = z.infer<typeof ReviewDecision>;
+
+/** POST /api/auth/token and /api/auth/token/refresh (simplejwt). */
+export const TokenPair = z.object({ access: z.string(), refresh: z.string() });
+export const TokenRefresh = z.object({ access: z.string() });

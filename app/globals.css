@@ -1,34 +1,163 @@
 @import "tailwindcss";
 
-/* Placeholder tokens. Phase 7a replaces these with the landing design tokens. */
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #6b7280;
-  --border: #e5e7eb;
+/* `light:` utilities apply when the light theme is active. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
+/* Design tokens (docs/LANDING.md section 1). Dark is the default; the inline script in app/layout.tsx
+   sets data-theme from the saved choice before first paint. Light accent is darker than the spec's
+   estimate so accent text and button labels meet WCAG AA. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1f1714;
+  --bg-nav: #140f0d;
+  --panel: #130e0c;
+  --card: #251c18;
+  --card-raised: #2e231e;
+  --line: #3a2d26;
+  --fg: #f2eadf;
+  --muted: #b5a698;
+  --accent: #e8a15e;
+  --accent-ink: #2a1a10;
+  --accent-soft: #3a2a1f;
+  --success: #5ec7b5;
+  --danger: #ef8a7a;
+  --warn: #e8c15e;
+  --paper: #ffffff;
+  --paper-ink: #2a1d16;
+  --paper-muted: #6e5e51;
+  --highlight: #6b4a2b;
+  --plate: #3b2b22;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fbf6ef;
+  --bg-nav: #f4ece1;
+  --panel: #f1e7da;
+  --card: #ffffff;
+  --card-raised: #f7efe6;
+  --line: #e5d8c8;
+  --fg: #2a1d16;
+  --muted: #6e5e51;
+  --accent: #9a5220;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e2cf;
+  --success: #1f6f60;
+  --danger: #b8432f;
+  --warn: #8a6410;
+  --paper: #ffffff;
+  --paper-ink: #2a1d16;
+  --paper-muted: #6e5e51;
+  --highlight: #f3d2b0;
+  --plate: #e5d8c8;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-bg-nav: var(--bg-nav);
+  --color-panel: var(--panel);
+  --color-card: var(--card);
+  --color-card-raised: var(--card-raised);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
   --color-muted: var(--muted);
-  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-paper: var(--paper);
+  --color-paper-ink: var(--paper-ink);
+  --color-paper-muted: var(--paper-muted);
+  --color-highlight: var(--highlight);
+  --color-plate: var(--plate);
+  /* Placeholder pages (login, health) still use these names. */
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-border: var(--line);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --font-mono: var(--font-mono-face);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b0d10;
-    --foreground: #ededed;
-    --muted: #9ca3af;
-    --border: #23262d;
-  }
+html {
+  scroll-behavior: smooth;
+}
+
+/* Soft, rounded Fraunces for headlines. */
+.font-display {
+  font-variation-settings: "SOFT" 100;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Sections land below the sticky nav when reached by anchor links. */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Fade-up on scroll. Content stays visible without JavaScript (the class "js" is set by the inline script)
+   and for people who prefer reduced motion. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease;
+}
+.js .reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.crossfade {
+  animation: fade-in 200ms ease both;
+}
+.row-in {
+  animation: rise-in 300ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .crossfade,
+  .row-in {
+    animation: none;
+  }
 }

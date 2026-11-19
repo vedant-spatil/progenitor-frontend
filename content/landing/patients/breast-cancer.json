@@ -1,0 +1,52 @@
+{
+  "id": "breast-cancer",
+  "tab": "A breast cancer patient",
+  "name": "Amara Okafor",
+  "age": 46,
+  "record": {
+    "resourceType": "Patient",
+    "id": "amara-okafor",
+    "gender": "female",
+    "conditions": [
+      { "code": "SNOMED 254837009", "text": "Breast cancer, HER2 positive, stage II", "onset": "2025-06" }
+    ],
+    "medications": [
+      { "rxnorm": "224905", "text": "trastuzumab, every 3 weeks", "since": "2025-08" }
+    ],
+    "labs": [
+      { "loinc": "10230-1", "text": "LVEF", "value": "60 %", "date": "2026-01-20" },
+      { "loinc": "89247-1", "text": "ECOG status", "value": "0", "date": "2026-01-20" },
+      { "loinc": "718-7", "text": "Hemoglobin", "value": "12.9 g/dL", "date": "2026-02-03" }
+    ]
+  },
+  "trials": [
+    {
+      "nct": "NCT0XXXX201",
+      "title": "Shorter adjuvant HER2-targeted therapy in early breast cancer",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "HER2-positive breast cancer, stage I to III", "status": "met", "evidence": "Condition/breast-cancer-2025-06" },
+        { "text": "LVEF 50 % or more", "status": "met", "evidence": "Observation/lvef-2026-01" },
+        { "text": "ECOG 0 or 1", "status": "met", "evidence": "Observation/ecog-2026-01" }
+      ]
+    },
+    {
+      "nct": "NCT0XXXX202",
+      "title": "Supervised exercise during adjuvant treatment",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "Receiving adjuvant therapy", "status": "met", "evidence": "MedicationRequest/trastuzumab-2025-08" },
+        { "text": "Can walk 400 m without help", "status": "unknown" }
+      ]
+    },
+    {
+      "nct": "NCT0XXXX203",
+      "title": "CDK4/6 inhibitor for HR-positive, HER2-negative disease",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "HER2-negative", "status": "not_met", "evidence": "Condition/breast-cancer-2025-06" },
+        { "text": "Hormone receptor positive", "status": "unknown" }
+      ]
+    }
+  ]
+}

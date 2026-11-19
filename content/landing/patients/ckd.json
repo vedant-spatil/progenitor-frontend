@@ -1,0 +1,54 @@
+{
+  "id": "ckd",
+  "tab": "A CKD patient",
+  "name": "Sam Whitfield",
+  "age": 67,
+  "record": {
+    "resourceType": "Patient",
+    "id": "sam-whitfield",
+    "gender": "male",
+    "conditions": [
+      { "code": "SNOMED 433144002", "text": "Chronic kidney disease stage 3", "onset": "2022-10" },
+      { "code": "SNOMED 38341003", "text": "Hypertension", "onset": "2015-03" }
+    ],
+    "medications": [
+      { "rxnorm": "52175", "text": "losartan 50 mg daily", "since": "2022-11" },
+      { "rxnorm": "83367", "text": "atorvastatin 20 mg daily", "since": "2018-05" }
+    ],
+    "labs": [
+      { "loinc": "98979-8", "text": "eGFR", "value": "41 mL/min/1.73m2", "date": "2026-02-18" },
+      { "loinc": "9318-7", "text": "Urine ACR", "value": "420 mg/g", "date": "2026-02-18" },
+      { "loinc": "2823-3", "text": "Potassium", "value": "4.6 mmol/L", "date": "2026-02-18" }
+    ]
+  },
+  "trials": [
+    {
+      "nct": "NCT0XXXX301",
+      "title": "Non-steroidal MRA for albuminuric chronic kidney disease",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "eGFR 25 to 60", "status": "met", "evidence": "Observation/egfr-2026-02" },
+        { "text": "Urine ACR 300 mg/g or more", "status": "met", "evidence": "Observation/uacr-2026-02" },
+        { "text": "Potassium 4.8 mmol/L or less", "status": "met", "evidence": "Observation/potassium-2026-02" },
+        { "text": "On an ACE inhibitor or ARB", "status": "met", "evidence": "MedicationRequest/losartan-2022-11" }
+      ]
+    },
+    {
+      "nct": "NCT0XXXX302",
+      "title": "Low-protein diet coaching in CKD stage 3 to 4",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "CKD stage 3 or 4", "status": "met", "evidence": "Condition/ckd-2022-10" },
+        { "text": "No dietitian visit in the last year", "status": "unknown" }
+      ]
+    },
+    {
+      "nct": "NCT0XXXX303",
+      "title": "Kidney transplant readiness programme",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "eGFR below 20", "status": "not_met", "evidence": "Observation/egfr-2026-02" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "diabetes",
+  "tab": "A diabetes patient",
+  "name": "Jordan Reyes",
+  "age": 58,
+  "record": {
+    "resourceType": "Patient",
+    "id": "jordan-reyes",
+    "gender": "male",
+    "conditions": [
+      { "code": "SNOMED 44054006", "text": "Type 2 diabetes mellitus", "onset": "2019-04" },
+      { "code": "SNOMED 38341003", "text": "Hypertension", "onset": "2021-08" }
+    ],
+    "medications": [
+      { "rxnorm": "6809", "text": "metformin 1000 mg twice daily", "since": "2024-09" },
+      { "rxnorm": "29046", "text": "lisinopril 10 mg daily", "since": "2021-09" }
+    ],
+    "labs": [
+      { "loinc": "4548-4", "text": "HbA1c", "value": "8.4 %", "date": "2026-03-02" },
+      { "loinc": "98979-8", "text": "eGFR", "value": "72 mL/min/1.73m2", "date": "2026-03-02" },
+      { "loinc": "39156-5", "text": "BMI", "value": "31.2 kg/m2", "date": "2026-02-11" }
+    ]
+  },
+  "trials": [
+    {
+      "nct": "NCT0XXXX101",
+      "title": "Once-weekly GLP-1 therapy added to metformin in type 2 diabetes",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "Age 18 to 75", "status": "met", "evidence": "Patient/jordan-reyes" },
+        { "text": "HbA1c 7.5 to 10.5 %", "status": "met", "evidence": "Observation/hba1c-2026-03" },
+        { "text": "Stable metformin for 3 months or more", "status": "met", "evidence": "MedicationRequest/metformin-2024-09" },
+        { "text": "Exclusion: insulin in the last 3 months", "status": "met", "evidence": "MedicationRequest?code=insulin" }
+      ]
+    },
+    {
+      "nct": "NCT0XXXX102",
+      "title": "Coached continuous glucose monitoring for adults with obesity and diabetes",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "BMI 30 or more", "status": "met", "evidence": "Observation/bmi-2026-02" },
+        { "text": "Owns a smartphone", "status": "unknown" }
+      ]
+    },
+    {
+      "nct": "NCT0XXXX103",
+      "title": "SGLT2 inhibitor in diabetic kidney disease",
+      "status": "Recruiting",
+      "criteria": [
+        { "text": "eGFR 25 to 60", "status": "not_met", "evidence": "Observation/egfr-2026-03" },
+        { "text": "Urine albumin-to-creatinine ratio 300 mg/g or more", "status": "unknown" }
+      ]
+    }
+  ]
+}
