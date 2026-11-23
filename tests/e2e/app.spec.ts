@@ -63,12 +63,19 @@ async function mockApi(page: Page) {
 
     if (path === "/api/auth/token") return json(route, { access: "access-1", refresh: "refresh-1" });
     if (path === "/api/me") return json(route, { id: 2, username: "demo", roles: ["coordinator", "clinician"] });
-    if (path === "/api/patients") return json(route, { items: [{ id: 1, label: "Synthea 001", source: "synthea" }] });
+    if (path === "/api/patients") {
+      const patient = { id: 1, label: "Synthea 001", source: "synthea", profile_cached_at: null, run_count: 0, last_run_status: null };
+      return json(route, { items: [patient] });
+    }
+    if (path === "/api/overview") {
+      const counts = { queued: 0, running: 0, waiting_clinician: 0, awaiting_review: 0, completed: 0, failed: 0, cancelled: 0 };
+      return json(route, { counts, queue: [], recent: [] });
+    }
     if (path === "/api/runs" && method === "GET") {
       const items = state.created
         ? [{ id: RUN_ID, patient_id: 1, patient_label: "Synthea 001", status: state.status, created_at: "2026-11-19T10:00:00Z", finished_at: null }]
         : [];
-      return json(route, { items });
+      return json(route, { items, next: null });
     }
     if (path === "/api/runs" && method === "POST") {
       state.created = true;
@@ -145,6 +152,8 @@ test("start run, watch decisions, answer, approve, edit the referral", async ({ 
   await page.getByLabel("Username").fill("demo");
   await page.getByLabel("Password").fill("demo-password-123");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Welcome, demo" })).toBeVisible();
+  await page.getByRole("navigation", { name: "App" }).getByRole("link", { name: "Runs", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Runs", exact: true })).toBeVisible();
   await expect(page.getByText("No runs yet.")).toBeVisible();
 
@@ -210,7 +219,7 @@ test("axe on sign-in and runs pages", async ({ page }) => {
     sessionStorage.setItem("progenitor.access", "a");
     sessionStorage.setItem("progenitor.refresh", "r");
   });
-  await page.goto("/app");
+  await page.goto("/app/runs");
   await expect(page.getByRole("heading", { name: "Runs", exact: true })).toBeVisible();
   r = await new AxeBuilder({ page }).analyze();
   expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);

@@ -28,6 +28,10 @@
   --paper-muted: #6e5e51;
   --highlight: #6b4a2b;
   --plate: #3b2b22;
+  /* Chart series (eval dashboard): validated for CVD and contrast on --card (dataviz validator). */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
 }
 
 [data-theme="light"] {
@@ -51,6 +55,10 @@
   --paper-muted: #6e5e51;
   --highlight: #f3d2b0;
   --plate: #e5d8c8;
+  /* Series 3 is under 3:1 on white: bars always carry value labels and a table view. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
 }
 
 @theme inline {

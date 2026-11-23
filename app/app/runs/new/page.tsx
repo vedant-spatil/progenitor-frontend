@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/app/auth";
 import { buttonPrimary, Card, ErrorNote, inputClass } from "@/components/app/bits";
@@ -11,7 +11,8 @@ export default function NewRunPage() {
   const router = useRouter();
   const { can } = useAuth();
   const [patients, setPatients] = useState<Patient[] | null>(null);
-  const [patientId, setPatientId] = useState("");
+  const preselect = useSearchParams().get("patient") ?? "";
+  const [patientId, setPatientId] = useState(/^\d+$/.test(preselect) ? preselect : "");
   const [asOf, setAsOf] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
