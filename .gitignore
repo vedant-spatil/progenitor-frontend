@@ -43,3 +43,10 @@ next-env.d.ts
 # Claude Code instructions stay local
 CLAUDE.md
 AGENTS.md
+
+# test output
+/test-results/
+/playwright-report/
+/blob-report/
+/.lighthouseci/
+/C:*lighthouse.*/

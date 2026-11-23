@@ -129,3 +129,257 @@ export const RunStatusEvent = z.object({
   steps_used: z.number().int().optional(),
   error: z.string().optional(),
 });
+
+// ---------------- Phase 7b additions ----------------
+
+export const Role = z.enum(["coordinator", "clinician", "admin"]);
+export type Role = z.infer<typeof Role>;
+
+/** GET /api/me */
+export const Me = z.object({ id: z.number().int(), username: z.string(), roles: z.array(Role) });
+export type Me = z.infer<typeof Me>;
+
+/** GET /api/patients: synthetic labels and run stats only (no FHIR id, no profile). */
+export const Patient = z.object({
+  id: z.number().int(),
+  label: z.string(),
+  source: z.string(),
+  profile_cached_at: z.string().nullable(),
+  run_count: z.number().int(),
+  last_run_status: RunStatus.nullable(),
+});
+export type Patient = z.infer<typeof Patient>;
+export const PatientList = z.object({ items: z.array(Patient) });
+
+/** GET /api/runs: newest first, 50 per page. Filters: status (comma list), patient, q, mine, before (cursor). */
+export const RunListItem = z.object({
+  id: z.uuid(),
+  patient_id: z.number().int(),
+  patient_label: z.string(),
+  status: RunStatus,
+  created_at: z.string(),
+  finished_at: z.string().nullable(),
+});
+export type RunListItem = z.infer<typeof RunListItem>;
+export const RunList = z.object({ items: z.array(RunListItem), next: z.string().nullable() });
+
+/** PATCH /api/referrals/{id}: edit the text, or discard. Clinician only. */
+export const ReferralUpdateRequest = z
+  .object({ body: z.string().max(20000).optional(), discard: z.boolean().optional() })
+  .refine((r) => r.discard || (r.body ?? "").trim().length > 0, { message: "body is required", path: ["body"] });
+export type Referral = z.infer<typeof Referral>;
+export type Verdict = z.infer<typeof Verdict>;
+export type ReviewDecision = z.infer<typeof ReviewDecision>;
+
+/** POST /api/auth/token and /api/auth/token/refresh (simplejwt). */
+export const TokenPair = z.object({ access: z.string(), refresh: z.string() });
+export const TokenRefresh = z.object({ access: z.string() });
+
+// ---------------- Phase 7c additions (backend apps/runs/browse.py, ADR 0007) ----------------
+
+/** GET /api/overview: counts by status, the user's queue (by role), the latest decisions (action only). */
+export const QueueReason = z.enum(["answer_question", "review_shortlist", "failed", "referral_drafts"]);
+export type QueueReason = z.infer<typeof QueueReason>;
+export const Overview = z.object({
+  counts: z.record(RunStatus, z.number().int()),
+  queue: z.array(
+    z.object({
+      run_id: z.uuid(),
+      patient_label: z.string(),
+      status: RunStatus,
+      reason: QueueReason,
+      since: z.string(),
+    }),
+  ),
+  recent: z.array(
+    z.object({
+      run_id: z.uuid(),
+      patient_label: z.string(),
+      step: z.number().int(),
+      action: z.string(),
+      guard_outcome: z.string(),
+      created_at: z.string(),
+    }),
+  ),
+});
+export type Overview = z.infer<typeof Overview>;
+
+/** Cached Profiler output (backend agents/schemas.py PatientProfile). Every fact carries its FHIR resource id. */
+const Fact = z.object({ resource_id: z.string(), system: z.string(), code: z.string(), display: z.string() });
+export const PatientProfile = z.object({
+  patient_ref: z.string(),
+  age_years: z.number().int().nullable(),
+  sex: z.string(),
+  conditions: z.array(
+    Fact.extend({ clinical_status: z.string(), onset: z.string().nullable(), abatement: z.string().nullable() }),
+  ),
+  medications: z.array(Fact.extend({ status: z.string(), authored_on: z.string().nullable() })),
+  labs: z.array(
+    Fact.extend({
+      value: z.number().nullable(),
+      value_text: z.string(),
+      unit: z.string(),
+      effective: z.string().nullable(),
+      category: z.string(),
+    }),
+  ),
+  truncated: z.boolean(),
+  notes: z.array(z.object({ resource_id: z.string(), text: z.string() })),
+});
+export type PatientProfile = z.infer<typeof PatientProfile>;
+
+const ShortlistStatus = z.enum(["draft", "approved", "rejected"]);
+
+/** GET /api/patients/{id} */
+export const PatientDetail = z.object({
+  id: z.number().int(),
+  label: z.string(),
+  source: z.string(),
+  profile_cached_at: z.string().nullable(),
+  profile: PatientProfile.nullable(),
+  runs: z.array(RunListItem),
+  shortlisted: z.array(
+    z.object({
+      run_id: z.uuid(),
+      nct_id: z.string(),
+      title: z.string(),
+      rank: z.number().int(),
+      counts: z.record(z.string(), z.number()),
+      status: ShortlistStatus,
+      created_at: z.string(),
+    }),
+  ),
+});
+export type PatientDetail = z.infer<typeof PatientDetail>;
+
+/** GET /api/trials: 25 per page. Filters: q, status, phase, shortlisted, page. */
+export const TrialRow = z.object({
+  nct_id: z.string(),
+  title: z.string(),
+  overall_status: z.string(),
+  phases: z.array(z.string()),
+  conditions: z.array(z.string()),
+  minimum_age: z.string(),
+  maximum_age: z.string(),
+  sex: z.string(),
+  criteria_count: z.number().int(),
+  shortlisted_count: z.number().int(),
+});
+export type TrialRow = z.infer<typeof TrialRow>;
+export const TrialList = z.object({
+  items: z.array(TrialRow),
+  total: z.number().int(),
+  page: z.number().int(),
+  page_size: z.number().int(),
+  statuses: z.array(z.string()),
+});
+
+/** GET /api/trials/{nct_id}: criteria and the runs that shortlisted the trial (counts and status, no reasons). */
+export const TrialDetail = z.object({
+  nct_id: z.string(),
+  title: z.string(),
+  overall_status: z.string(),
+  phases: z.array(z.string()),
+  conditions: z.array(z.string()),
+  minimum_age: z.string(),
+  maximum_age: z.string(),
+  sex: z.string(),
+  healthy_volunteers: z.boolean().nullable(),
+  source_last_updated: z.string().nullable(),
+  fetched_at: z.string(),
+  criteria: z.array(z.object({ position: z.number().int(), kind: z.enum(["inclusion", "exclusion"]), source_text: z.string() })),
+  matches: z.array(
+    z.object({
+      run_id: z.uuid(),
+      patient_id: z.number().int(),
+      patient_label: z.string(),
+      rank: z.number().int(),
+      counts: z.record(z.string(), z.number()),
+      status: ShortlistStatus,
+      created_at: z.string(),
+    }),
+  ),
+});
+export type TrialDetail = z.infer<typeof TrialDetail>;
+
+/** GET /api/referrals?status=: referral drafts across runs. */
+export const ReferralStatus = z.enum(["draft", "edited", "discarded"]);
+export type ReferralStatus = z.infer<typeof ReferralStatus>;
+export const InboxReferral = Referral.extend({
+  title: z.string(),
+  run_id: z.uuid(),
+  patient_label: z.string(),
+  edited_by: z.string().nullable(),
+  updated_at: z.string(),
+});
+export type InboxReferral = z.infer<typeof InboxReferral>;
+export const ReferralInbox = z.object({
+  counts: z.record(ReferralStatus, z.number().int()),
+  next: z.string().nullable(),
+  items: z.array(InboxReferral),
+});
+
+/** GET /api/audit (admin only): event metadata. The API never returns payloads. */
+export const AuditLog = z.object({
+  kinds: z.array(z.object({ value: z.string(), label: z.string() })),
+  next: z.string().nullable(),
+  items: z.array(
+    z.object({
+      id: z.number().int(),
+      created_at: z.string(),
+      kind: z.string(),
+      kind_label: z.string(),
+      actor: z.string().nullable(),
+      node: z.string(),
+      run_id: z.uuid().nullable(),
+    }),
+  ),
+});
+export type AuditLog = z.infer<typeof AuditLog>;
+
+/** GET /api/evals: Phase 6 reports (newest first) and the gate thresholds (ADR 0005). */
+const num = z.number().nullable().optional();
+export const EvalRow = z.object({
+  patients: num,
+  "ndcg@10": num,
+  "ndcg@5": num,
+  "p@5": num,
+  mrr: num,
+  unknown_rate: num,
+  citation_validity: num,
+  tokens_per_patient: num,
+  cost_per_patient_usd: num,
+  seconds_per_patient: num,
+  errors: num,
+});
+export type EvalRow = z.infer<typeof EvalRow>;
+export const EvalReport = z.object({
+  id: z.string(),
+  created_at: z.string(),
+  config: z.object({
+    model: z.string().nullable().optional(),
+    patients: num,
+    scored: num,
+    per_cohort: num,
+    pool_size: num,
+    seed: num,
+    snapshot: z.string().nullable().optional(),
+    replay: z.boolean().nullable().optional(),
+    spent_calls: num,
+    spent_tokens_in: num,
+    spent_tokens_out: num,
+    spent_usd: num,
+  }),
+  table: z.record(z.string(), z.record(z.string(), EvalRow)),
+  fails: z.array(z.string()),
+});
+export type EvalReport = z.infer<typeof EvalReport>;
+export const EvalThresholds = z.object({
+  supervisor_minus_bm25_ndcg10: num,
+  supervisor_minus_fixed_ndcg10: num,
+  citation_validity: num,
+  baseline: z.record(z.string(), z.unknown()).nullable().optional(),
+  adr: z.string().nullable().optional(),
+});
+export type EvalThresholds = z.infer<typeof EvalThresholds>;
+export const EvalReports = z.object({ thresholds: EvalThresholds.nullable(), reports: z.array(EvalReport) });
