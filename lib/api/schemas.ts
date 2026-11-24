@@ -383,3 +383,17 @@ export const EvalThresholds = z.object({
 });
 export type EvalThresholds = z.infer<typeof EvalThresholds>;
 export const EvalReports = z.object({ thresholds: EvalThresholds.nullable(), reports: z.array(EvalReport) });
+
+/** Demo cases (backend apps/runs/demo.py, Phase 9): preset synthetic patients for one-click runs. */
+export const DemoCase = z.object({
+  patient_id: z.number().int(),
+  label: z.string(),
+  age_years: z.number().int().nullable(),
+  sex: z.string(),
+  conditions: z.array(z.string()),
+  latest_run: z.object({ id: z.uuid(), status: RunStatus, created_at: z.string() }).nullable(),
+});
+export type DemoCase = z.infer<typeof DemoCase>;
+export const DemoCases = z.object({ items: z.array(DemoCase) });
+export const DemoStart = z.object({ id: z.uuid(), status: RunStatus, created: z.boolean() });
+export const DemoReset = z.object({ cancelled: z.number().int() });

@@ -40,7 +40,15 @@ const evalRow = (ndcg: number) => ({
 });
 
 async function mockApi(page: Page, roles: Role[]) {
-  const state = { referral: { id: 7, nct_id: NCT, body: "Dear colleague, draft.", status: "draft", approved_by: 2, created_at: T }, patch: null as unknown, auditQueries: [] as string[] };
+  const demo = {
+    items: [
+      { patient_id: 1, label: "Synthea 001", age_years: 61, sex: "female", conditions: ["Type 2 diabetes", "Hypertension"], latest_run: { id: RUN2, status: "waiting_clinician", created_at: T } },
+      { patient_id: 3, label: "Synthea 003", age_years: null, sex: "", conditions: [], latest_run: null },
+    ],
+    starts: [] as number[],
+    resets: 0,
+  };
+  const state = { demo, referral: { id: 7, nct_id: NCT, body: "Dear colleague, draft.", status: "draft", approved_by: 2, created_at: T }, patch: null as unknown, auditQueries: [] as string[] };
   const json = (route: Route, body: unknown, status = 200) =>
     route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
   const reader = roles.includes("coordinator") || roles.includes("clinician");
@@ -68,6 +76,20 @@ async function mockApi(page: Page, roles: Role[]) {
       });
     }
     if (!reader) return json(route, { detail: "forbidden" }, 403);
+    if (path === "/api/demo") return json(route, { items: demo.items });
+    const demoStart = path.match(/^\/api\/demo\/(\d+)\/start$/);
+    if (demoStart && req.method() === "POST") {
+      if (!roles.includes("coordinator")) return json(route, { detail: "forbidden" }, 403);
+      demo.starts.push(Number(demoStart[1]));
+      return json(route, { id: RUN, status: "queued", created: true }, 201);
+    }
+    if (path === "/api/demo/reset" && req.method() === "POST") {
+      if (!roles.includes("coordinator")) return json(route, { detail: "forbidden" }, 403);
+      demo.resets += 1;
+      demo.items[0].latest_run = { ...demo.items[0].latest_run!, status: "cancelled" };
+      return json(route, { cancelled: 1 });
+    }
+    if (path === "/api/demo") return json(route, { items: [] });
     if (path === "/api/overview") {
       const queue = [];
       if (roles.includes("clinician")) {
@@ -216,6 +238,34 @@ test("home: status tiles and the clinician queue", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Matching runs" }).getByRole("link")).toHaveCount(1);
   await expect(nav(page).getByRole("link", { name: "Runs", exact: true })).toHaveAttribute("aria-current", "page");
   await checkPage(page);
+});
+
+test("home: demo cases start a run in one click and reset cancels open ones", async ({ page }) => {
+  const state = await signedIn(page, ["coordinator"], "/app");
+  const card = page.getByRole("region", { name: "Demo cases" });
+  await expect(card.getByText("Type 2 diabetes, Hypertension")).toBeVisible();
+  await expect(card.getByText("61 y · female")).toBeVisible();
+  // An open run links to its page and has no second Start.
+  await expect(card.getByRole("link", { name: "Open run for Synthea 001" })).toHaveAttribute("href", `/app/runs/${RUN2}`);
+  await expect(card.getByRole("button", { name: /demo run for Synthea 001/ })).toHaveCount(0);
+  await checkPage(page);
+
+  await card.getByRole("button", { name: "Reset demo" }).click();
+  await card.getByRole("button", { name: "Yes, reset" }).click();
+  await expect(card.getByRole("status")).toHaveText("Cancelled 1 open demo run.");
+  expect(state.demo.resets).toBe(1);
+  await expect(card.getByRole("button", { name: "Run again demo run for Synthea 001" })).toBeVisible();
+
+  await card.getByRole("button", { name: "Start demo run for Synthea 003" }).click();
+  await expect(page).toHaveURL(new RegExp(`/app/runs/${RUN}$`));
+  expect(state.demo.starts).toEqual([3]);
+});
+
+test("home: clinicians see demo cases but cannot start or reset", async ({ page }) => {
+  await signedIn(page, ["clinician"], "/app");
+  const card = page.getByRole("region", { name: "Demo cases" });
+  await expect(card.getByText("Synthea 003")).toBeVisible();
+  await expect(card.getByRole("button")).toHaveCount(0);
 });
 
 test("patients: list, detail with cited profile, start a run for the patient", async ({ page }) => {

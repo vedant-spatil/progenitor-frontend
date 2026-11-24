@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/app/auth";
+import { DemoCasesCard } from "@/components/app/DemoCases";
 import { buttonPrimary, Card, formatTime, LoadState, PageHeader, Stat, StatusBadge } from "@/components/app/bits";
 import { useApi } from "@/components/app/useApi";
 import { Overview, type QueueReason, type RunStatus } from "@/lib/api/schemas";
@@ -69,6 +70,7 @@ export default function HomePage() {
               />
             ))}
           </section>
+          <DemoCasesCard />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <Card title="My queue">
               {data.queue.length ? (

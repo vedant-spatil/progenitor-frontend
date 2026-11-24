@@ -67,6 +67,8 @@ async function mockApi(page: Page) {
       const patient = { id: 1, label: "Synthea 001", source: "synthea", profile_cached_at: null, run_count: 0, last_run_status: null };
       return json(route, { items: [patient] });
     }
+    if (path === "/api/demo") return json(route, { items: [] });
+    if (path === "/api/demo") return json(route, { items: [] });
     if (path === "/api/overview") {
       const counts = { queued: 0, running: 0, waiting_clinician: 0, awaiting_review: 0, completed: 0, failed: 0, cancelled: 0 };
       return json(route, { counts, queue: [], recent: [] });
