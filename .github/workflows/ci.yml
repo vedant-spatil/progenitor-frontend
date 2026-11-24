@@ -50,6 +50,11 @@ jobs:
       - run: npm run build
       - run: npx playwright test
       - run: npm run lighthouse
+      # Phase 8: the same suites against the static export served like S3 + CloudFront (ADR 0008).
+      - run: NEXT_OUTPUT=export npm run build
+      - run: npx playwright test
+        env:
+          E2E_EXPORT: "1"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

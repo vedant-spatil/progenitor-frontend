@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Gate 7a browser tests. Runs against a production build (`next start`).
+// Gate 7a browser tests. Runs against a production build (`next start`), or with E2E_EXPORT=1 against
+// the static export in out/ (`NEXT_OUTPUT=export npm run build`), served like S3 + CloudFront.
 const PORT = Number(process.env.E2E_PORT ?? 3100);
+const EXPORT = process.env.E2E_EXPORT === "1";
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -22,7 +24,7 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, isMobile: false } },
   ],
   webServer: {
-    command: `npx next start -p ${PORT}`,
+    command: EXPORT ? `PORT=${PORT} node scripts/serve-export.mjs` : `npx next start -p ${PORT}`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
